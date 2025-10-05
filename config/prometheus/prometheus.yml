@@ -1,0 +1,67 @@
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  scrape_protocols:
+  - OpenMetricsText1.0.0
+  - OpenMetricsText0.0.1
+  - PrometheusText1.0.0
+  - PrometheusText0.0.4
+  evaluation_interval: 15s
+  metric_name_validation_scheme: utf8
+runtime:
+  gogc: 75
+alerting:
+  alertmanagers:
+  - follow_redirects: true
+    enable_http2: true
+    scheme: http
+    timeout: 10s
+    api_version: v2
+    static_configs:
+    - targets: []
+scrape_configs:
+- job_name: 'snmp'
+  static_configs:
+    - targets:
+      - 10.16.93.30
+      - 10.16.93.31
+  metrics_path: /snmp
+  params:
+    auth: [public_v3]
+    module: [if_mib]
+  relabel_configs:
+    - source_labels: [__address__]
+      target_label: __param_target
+    - source_labels: [__param_target]
+      target_label: instance
+    - target_label: __address__
+      replacement: snmp_exporter:9116  # The SNMP exporter's real hostname:port.
+- job_name: 'snmp_exporter'
+  static_configs:
+    - targets: ['snmp_exporter:9116']
+- job_name: prometheus
+  honor_timestamps: true
+  track_timestamps_staleness: false
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  scrape_protocols:
+  - OpenMetricsText1.0.0
+  - OpenMetricsText0.0.1
+  - PrometheusText1.0.0
+  - PrometheusText0.0.4
+  always_scrape_classic_histograms: false
+  convert_classic_histograms_to_nhcb: false
+  metrics_path: /metrics
+  scheme: http
+  enable_compression: true
+  metric_name_validation_scheme: utf8
+  metric_name_escaping_scheme: allow-utf-8
+  follow_redirects: true
+  enable_http2: true
+  static_configs:
+  - targets:
+    - localhost:9090
+    labels:
+      app: prometheus
+otlp:
+  translation_strategy: UnderscoreEscapingWithSuffixes

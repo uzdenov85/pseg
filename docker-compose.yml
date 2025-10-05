@@ -1,0 +1,41 @@
+---
+services:
+  prometheus:
+    image: prom/prometheus:main
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - .\config\prometheus:/etc/prometheus
+    restart: always
+    networks:
+      - devl
+    depends_on:
+      - snmp_exporter
+  
+  snmp_exporter:
+    image: prom/snmp-exporter:main
+    container_name: snmp_exporter
+    networks:
+      - devl
+    ports:
+      - "9116:9116"
+      - "161:161"
+    volumes:
+      - .\config\snmp_exporter:/etc/snmp_exporter
+    restart: always
+  grafana:
+    image: grafana/grafana:main-ubuntu
+    container_name: grafana
+    networks:
+      - devl
+    ports:
+      - "3000:3000"
+    volumes:
+      - .\config\grafana:/var/lib/grafana
+    restart: always
+
+networks:
+  devl:
+    driver: bridge
+
